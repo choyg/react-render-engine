@@ -1,0 +1,11 @@
+# macOS
+.DS_Store
+
+# Vim
+*.swp
+
+# Packages
+/node_modules
+
+# Builds
+/dist
