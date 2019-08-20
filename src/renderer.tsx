@@ -3,11 +3,14 @@ import * as React from 'react';
 import { ComponentClass } from 'react';
 import { renderToString, version as reactDomVersion } from 'react-dom/server';
 import { PageBuilder } from './builder';
+import { ReactSSROptions } from '.';
 const serialize = require('serialize-javascript');
 const suffix = process.env.NODE_ENV === 'production' ? '.production.min.js' : '.development.js';
 const MFS = require('memory-fs');
 
 export class Renderer {
+  private readonly options: ReactSSROptions;
+
   // File system storing built pages
   private readonly fs: any;
 
@@ -16,17 +19,19 @@ export class Renderer {
   private pathDict: { [name: string]: string } = {};
   private paths: string[] = [];
 
-  constructor(private readonly directory: string) {
+  constructor(options: ReactSSROptions) {
+    this.options = options;
+
     this.fs = new MFS();
     const builder = new PageBuilder({
       pathDict: this.pathDict,
       publishFS: this.fs,
     });
 
-    console.log('Building pages...');
+    console.info('Building React pages...');
     this.init()
       .then(() => builder.buildPages())
-      .then(() => console.log('Finished building pages.'));
+      .then(() => console.info('Finished building React pages.'));
   }
 
   getHtml(name: string, props: object) {
@@ -34,23 +39,16 @@ export class Renderer {
     return `
   <!DOCTYPE html>
   <html>
-  <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="" rel="icon" type="image/x-icon" />
-  <title>React Example</title>
-  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
-  <link rel="stylesheet" href="//cdn.rawgit.com/necolas/normalize.css/master/normalize.css">
-  <link rel="stylesheet" href="//cdn.rawgit.com/milligram/milligram/master/dist/milligram.min.css">
-  <link rel="stylesheet" href="/public/base.css">
+  ${this.options.head}
   </head>
   <body>
   ${renderToString(<div id="react-container">{React.createFactory(this.pageDict[name])(props)}</div>)}
   </div>
-  <script src="https://unpkg.com/react@${React.version}/umd/react${suffix}"></script>
-  <script src="https://unpkg.com/react-dom@${reactDomVersion}/umd/react-dom${suffix}"></script>
   <script>var APP_PROPS = ${serialize(props)};</script>
   <script>${js}</script>
+  <script src="https://unpkg.com/react@${React.version}/umd/react${suffix}"></script>
+  <script src="https://unpkg.com/react-dom@${reactDomVersion}/umd/react-dom${suffix}"></script>
+  ${this.options.body}
   </body>
   </html>
   `;
@@ -58,8 +56,8 @@ export class Renderer {
 
   async init() {
     // Find all component files
-    const files = await globby('*', { cwd: this.directory });
-    this.paths = files.map(f => `${this.directory}/${f}`);
+    const files = await globby('*', { cwd: this.options.pages });
+    this.paths = files.map(f => `${this.options.pages}/${f}`);
 
     // Create map of component name -> module and page
     this.paths.map(path => {

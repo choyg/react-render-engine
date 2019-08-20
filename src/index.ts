@@ -3,7 +3,7 @@ import { Props } from 'react';
 import { Renderer } from './renderer';
 
 export const ReactSSR = (app: Express, options: ReactSSROptions) => {
-  const renderer = new Renderer(options.pages);
+  const renderer = new Renderer(options);
   app.use((req, res, next) => {
     res.render = (path: string, props?: object) => {
       const rendered = renderer.getHtml(path, props || {});
@@ -21,7 +21,7 @@ export interface ReactSSROptions {
   pages: string;
 
   /**
-   * String inserted in between head tags
+   * String inserted between head tags
    *
    * <head>
    * ${ReactSSROptions.head}
