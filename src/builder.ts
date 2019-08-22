@@ -106,8 +106,7 @@ export class PageBuilder {
       });
       compiler.outputFileSystem = this.publishFS;
       compiler.run((err, stats) => {
-        if (err) reject(err);
-        console.log(stats);
+        if (err || stats.hasErrors()) reject(err);
         resolve();
       });
     });

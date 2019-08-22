@@ -2,8 +2,8 @@ import globby from 'globby';
 import * as React from 'react';
 import { ComponentClass } from 'react';
 import { renderToString, version as reactDomVersion } from 'react-dom/server';
-import { PageBuilder } from './builder';
 import { ReactSSROptions } from '.';
+import { PageBuilder } from './builder';
 const serialize = require('serialize-javascript');
 const suffix = process.env.NODE_ENV === 'production' ? '.production.min.js' : '.development.js';
 const MFS = require('memory-fs');
@@ -45,10 +45,10 @@ export class Renderer {
   ${renderToString(<div id="react-container">{React.createFactory(this.pageDict[name])(props)}</div>)}
   </div>
   <script>var APP_PROPS = ${serialize(props)};</script>
-  <script>${js}</script>
   <script src="https://unpkg.com/react@${React.version}/umd/react${suffix}"></script>
   <script src="https://unpkg.com/react-dom@${reactDomVersion}/umd/react-dom${suffix}"></script>
   ${this.options.body}
+  <script>${js}</script>
   </body>
   </html>
   `;
