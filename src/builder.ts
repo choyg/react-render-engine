@@ -28,9 +28,7 @@ export class PageBuilder {
   async buildPages() {
     try {
       // Create the individual jsx clients
-      const clients = await Promise.all(
-        Object.entries(this.pathDict).map(([name, path]) => this.createClient(path, name))
-      );
+      const clients = await Promise.all(Object.entries(this.pathDict).map(([name, path]) => this.createClient(path, name)));
 
       // Webpack bundle each client into js
       await Promise.all(
@@ -98,6 +96,10 @@ export class PageBuilder {
             {
               test: /\.tsx?$/,
               loader: 'ts-loader',
+              options: {
+                allowTsInNodeModules: true,
+                transpileOnly: true,
+              },
             },
           ],
         },
@@ -105,6 +107,7 @@ export class PageBuilder {
       compiler.outputFileSystem = this.publishFS;
       compiler.run((err, stats) => {
         if (err) reject(err);
+        console.log(stats);
         resolve();
       });
     });
