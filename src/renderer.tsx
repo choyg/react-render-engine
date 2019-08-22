@@ -1,4 +1,5 @@
 import globby from 'globby';
+import * as path from 'path';
 import * as React from 'react';
 import { ComponentClass } from 'react';
 import { renderToString, version as reactDomVersion } from 'react-dom/server';
@@ -16,6 +17,7 @@ export class Renderer {
 
   // Temporary directory components only
   private pageDict: { [name: string]: ComponentClass } = {};
+  // Dict of path to component name
   private pathDict: { [name: string]: string } = {};
   private paths: string[] = [];
 
@@ -55,9 +57,14 @@ export class Renderer {
   }
 
   async init() {
+    let directory = this.options.pages;
+    if (!path.isAbsolute(directory)) {
+      directory = `${process.cwd()}/${directory}`;
+    }
+
     // Find all component files
-    const files = await globby('*', { cwd: this.options.pages });
-    this.paths = files.map(f => `${this.options.pages}/${f}`);
+    const files = await globby('*', { cwd: directory });
+    this.paths = files.map(f => `${directory}/${f}`);
 
     // Create map of component name -> module and page
     this.paths.map(path => {
