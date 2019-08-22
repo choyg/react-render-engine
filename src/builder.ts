@@ -28,7 +28,7 @@ export class PageBuilder {
   async buildPages() {
     try {
       // Create the individual jsx clients
-      const clients = await Promise.all(Object.entries(this.pathDict).map(([name, path]) => this.createClient(path, name)));
+      const clients = await Promise.all(Object.entries(this.pathDict).map(([name, path]) => this.createClient(path)));
 
       // Webpack bundle each client into js
       await Promise.all(
@@ -49,21 +49,35 @@ export class PageBuilder {
    * Creates a tsx file for the page component
    *
    * @param path
-   * @param name
+   * @param name Name of the component to import
    */
-  async createClient(path: string, name: string) {
+  async createClient(path: string) {
+    // Use file's first export. Special handling for default exports
+    const module = require(path);
+    const exportName = Object.keys(module)[0];
+    const className = module[exportName].name;
+
+    // Assume default export
+    let componentName = 'componentClass';
+    let importStatement = `import ${componentName} from '${path}';`;
+    // If not default export, use the real export name
+    if (exportName !== 'default') {
+      componentName = exportName;
+      importStatement = `import { ${componentName} } from '${path}';`;
+    }
+
     path = path.substring(0, path.lastIndexOf('.'));
     const js = `
     import React from 'react';
     import { hydrate } from 'react-dom';
-    import componentClass from '${path}';
+    ${importStatement}
 
     const w = window as any;
-    const component = React.createFactory(componentClass);
+    const component = React.createFactory(${componentName});
     const el = document.getElementById('react-container');
     hydrate(component(w.APP_PROPS), el);
   `;
-    const writePath = `${__dirname}/raw/${name}.tsx`;
+    const writePath = `${__dirname}/raw/${className}.tsx`;
     this.buildFS.writeFileSync(writePath, js);
     return writePath;
   }
