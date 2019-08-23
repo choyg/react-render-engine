@@ -2,7 +2,7 @@ import { Express } from 'express';
 import { Renderer } from './renderer';
 import { ReactSSROptions } from './types';
 
-export const ReactSSR = (app: Express, options: ReactSSROptions) => {
+export const ReactSSR = (app: Express, options?: Partial<ReactSSROptions>) => {
   const renderer = new Renderer(options);
   app.use((req, res, next) => {
     res.render = (path: string, props?: object) => {

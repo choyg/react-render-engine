@@ -4,7 +4,7 @@ import * as React from 'react';
 import { ComponentClass } from 'react';
 import { renderToString, version as reactDomVersion } from 'react-dom/server';
 import { PageBuilder } from './builder';
-import { ReactSSROptions } from './types';
+import { DefaultOptions, ReactSSROptions } from './types';
 const serialize = require('serialize-javascript');
 const suffix = process.env.NODE_ENV === 'production' ? '.production.min.js' : '.development.js';
 const MFS = require('memory-fs');
@@ -21,8 +21,8 @@ export class Renderer {
   private pathDict: { [name: string]: string } = {};
   private paths: string[] = [];
 
-  constructor(options: ReactSSROptions) {
-    this.options = options;
+  constructor(options?: Partial<ReactSSROptions>) {
+    this.options = { ...DefaultOptions, ...options };
 
     this.fs = new MFS();
     const builder = new PageBuilder({
@@ -63,7 +63,7 @@ export class Renderer {
     }
 
     // Find all component files
-    const files = await globby('*', { cwd: directory });
+    const files = await globby(this.options.include, { cwd: directory, expandDirectories: true });
     this.paths = files.map(f => `${directory}/${f}`);
 
     // Create map of component name -> module and page

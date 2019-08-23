@@ -7,12 +7,23 @@ export interface RenderProps {
 
 export interface ReactSSROptions {
   /**
-   * Directory containing the page components
+   * Directory containing the page components.
+   *
+   * @default ''
    */
   pages: string;
 
   /**
+   * Glob pattern of files to include as pages.
+   *
+   * @default ['**.js', '**.ts', '**.jsx', '**.tsx', '!node_modules']
+   */
+  include: string | string[];
+
+  /**
    * String inserted between head tags
+   *
+   * @default ''
    *
    * <head>
    * ${ReactSSROptions.head}
@@ -22,6 +33,8 @@ export interface ReactSSROptions {
 
   /**
    * String inserted after the main React page
+   *
+   * @default ''
    *
    * <body>
    *   <div id="react-container" />
@@ -37,3 +50,10 @@ export interface ReactSSROptions {
 export interface RenderOptions extends ReactSSROptions {
   props: Props<any>;
 }
+
+export const DefaultOptions: ReactSSROptions = {
+  body: '',
+  head: '',
+  pages: '',
+  include: ['**.js', '**.ts', '**.jsx', '**.tsx', '!node_modules'],
+};
