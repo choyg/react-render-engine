@@ -1,6 +1,6 @@
 import { Express } from 'express';
-import { Props } from 'react';
 import { Renderer } from './renderer';
+import { ReactSSROptions } from './types';
 
 export const ReactSSR = (app: Express, options: ReactSSROptions) => {
   const renderer = new Renderer(options);
@@ -13,36 +13,3 @@ export const ReactSSR = (app: Express, options: ReactSSROptions) => {
     next();
   });
 };
-
-export interface ReactSSROptions {
-  /**
-   * Directory containing the page components
-   */
-  pages: string;
-
-  /**
-   * String inserted between head tags
-   *
-   * <head>
-   * ${ReactSSROptions.head}
-   * </head>
-   */
-  head: string;
-
-  /**
-   * String inserted after the main React page
-   *
-   * <body>
-   *   <div id="react-container" />
-   *   ${ReactSSROptions.body}
-   *   ${ReactSSROptions.reactSrc}
-   *   ${ReactSSROptions.reactDomSrc}
-   * </body>
-   *
-   */
-  body: string;
-}
-
-export interface RenderOptions extends ReactSSROptions {
-  props: Props<any>;
-}
