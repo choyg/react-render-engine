@@ -39,20 +39,20 @@ export class Renderer {
   getHtml(name: string, props: object) {
     const js = this.getClient(name);
     return `
-  <!DOCTYPE html>
-  <html>
-  ${this.options.head}
-  </head>
-  <body>
-  ${renderToString(<div id="react-container">{React.createFactory(this.pageDict[name])(props)}</div>)}
-  </div>
-  <script>var APP_PROPS = ${serialize(props)};</script>
-  <script src="https://unpkg.com/react@${React.version}/umd/react${suffix}"></script>
-  <script src="https://unpkg.com/react-dom@${reactDomVersion}/umd/react-dom${suffix}"></script>
-  ${this.options.body}
-  <script>${js}</script>
-  </body>
-  </html>
+<!DOCTYPE html>
+<html>
+<head>
+${this.options.head}
+</head>
+<body>
+${renderToString(<div id="react-container">{React.createFactory(this.pageDict[name])(props)}</div>)}
+<script>var APP_PROPS = ${serialize(props)};</script>
+<script src="https://unpkg.com/react@${React.version}/umd/react${suffix}"></script>
+<script src="https://unpkg.com/react-dom@${reactDomVersion}/umd/react-dom${suffix}"></script>
+${this.options.body}
+<script>${js}</script>
+</body>
+</html>
   `;
   }
 
