@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "dependencies": {
     "globby": "^10.0.1",
     "memory-fs": "^0.4.1",
