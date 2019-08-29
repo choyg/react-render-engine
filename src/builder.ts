@@ -8,10 +8,12 @@ export class PageBuilder {
   private readonly publishFS: any;
   private readonly buildFS = fs;
   private readonly pathDict: { [name: string]: string };
+  private readonly debug: boolean;
 
-  constructor({ publishFS, pathDict }: PageBuilderOptions) {
+  constructor({ publishFS, pathDict, debug }: PageBuilderOptions) {
     this.publishFS = publishFS;
     this.pathDict = pathDict;
+    this.debug = debug;
 
     // Clear any existing generated folders
     rimraf(this.rawDir);
@@ -120,6 +122,7 @@ export class PageBuilder {
       });
       compiler.outputFileSystem = this.publishFS;
       compiler.run((err, stats) => {
+        if (this.debug) console.debug({ err, stats });
         if (err) reject(err);
         if (stats.hasErrors()) reject(stats);
         resolve();
@@ -131,4 +134,5 @@ export class PageBuilder {
 export interface PageBuilderOptions {
   publishFS: any;
   pathDict: { [name: string]: string };
+  debug: boolean;
 }

@@ -45,6 +45,13 @@ export interface ReactSSROptions {
    *
    */
   body: string;
+
+  /**
+   * Log debug messages for development
+   *
+   * @default false
+   */
+  debug: boolean;
 }
 
 export interface RenderOptions extends ReactSSROptions {
@@ -56,4 +63,5 @@ export const DefaultOptions: ReactSSROptions = {
   head: '',
   pages: '',
   include: ['**.js', '**.ts', '**.jsx', '**.tsx', '!node_modules'],
+  debug: false,
 };

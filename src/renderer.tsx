@@ -28,12 +28,17 @@ export class Renderer {
     const builder = new PageBuilder({
       pathDict: this.pathDict,
       publishFS: this.fs,
+      debug: this.options.debug,
     });
 
     console.info('Building React pages...');
     this.init()
       .then(() => builder.buildPages())
-      .then(() => console.info('Finished building React pages.'));
+      .then(() => console.info('Finished building React pages.'))
+      .catch(err => {
+        if (this.options.debug) console.error(err);
+        throw err;
+      });
   }
 
   getHtml(name: string, props: object) {
