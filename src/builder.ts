@@ -5,16 +5,9 @@ import { rimraf } from './utils/rimraf';
 export class PageBuilder {
   // Temporary directory components only
   private readonly rawDir = `${__dirname}/raw`;
-  private readonly publishFS: any;
   private readonly buildFS = fs;
-  private readonly pathDict: { [name: string]: string };
-  private readonly debug: boolean;
 
-  constructor({ publishFS, pathDict, debug }: PageBuilderOptions) {
-    this.publishFS = publishFS;
-    this.pathDict = pathDict;
-    this.debug = debug;
-
+  constructor(private readonly options: PageBuilderOptions) {
     // Clear any existing generated folders
     rimraf(this.rawDir);
 
@@ -30,7 +23,7 @@ export class PageBuilder {
   async buildPages() {
     try {
       // Create the individual jsx clients
-      const clients = await Promise.all(Object.entries(this.pathDict).map(([name, path]) => this.createClient(path)));
+      const clients = await Promise.all(Object.entries(this.options.pathDict).map(([name, path]) => this.createClient(path)));
 
       // Webpack bundle each client into js
       await Promise.all(
@@ -96,7 +89,7 @@ export class PageBuilder {
         entry: {
           [name]: path,
         },
-        mode: 'production',
+        mode: this.options.mode,
         output: {
           path: __dirname + '/clients',
         },
@@ -120,9 +113,9 @@ export class PageBuilder {
           ],
         },
       });
-      compiler.outputFileSystem = this.publishFS;
+      compiler.outputFileSystem = this.options.publishFS;
       compiler.run((err, stats) => {
-        if (this.debug) console.debug({ err, stats });
+        if (this.options.debug) console.debug({ err, stats });
         if (err) reject(err);
         if (stats.hasErrors()) reject(stats);
         resolve();
@@ -135,4 +128,5 @@ export interface PageBuilderOptions {
   publishFS: any;
   pathDict: { [name: string]: string };
   debug: boolean;
+  mode: 'development' | 'production';
 }

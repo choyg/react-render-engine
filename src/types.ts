@@ -52,6 +52,12 @@ export interface ReactSSROptions {
    * @default false
    */
   debug: boolean;
+
+  /**
+   * Sets Webpack and React mode. Defaults to development unless NODE_ENV is production
+   *
+   */
+  mode: 'production' | 'development';
 }
 
 export interface RenderOptions extends ReactSSROptions {
@@ -64,4 +70,5 @@ export const DefaultOptions: ReactSSROptions = {
   pages: '',
   include: ['**.js', '**.ts', '**.jsx', '**.tsx', '!node_modules'],
   debug: false,
+  mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
 };

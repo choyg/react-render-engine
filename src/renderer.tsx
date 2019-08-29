@@ -6,11 +6,13 @@ import { renderToString, version as reactDomVersion } from 'react-dom/server';
 import { PageBuilder } from './builder';
 import { DefaultOptions, ReactSSROptions } from './types';
 const serialize = require('serialize-javascript');
-const suffix = process.env.NODE_ENV === 'production' ? '.production.min.js' : '.development.js';
 const MFS = require('memory-fs');
 
 export class Renderer {
   private readonly options: ReactSSROptions;
+
+  // React CDN suffix based on mode
+  private readonly suffix: string;
 
   // File system storing built pages
   private readonly fs: any;
@@ -24,11 +26,14 @@ export class Renderer {
   constructor(options?: Partial<ReactSSROptions>) {
     this.options = { ...DefaultOptions, ...options };
 
+    this.suffix = this.options.mode === 'production' ? '.production.min.js' : '.development.js';
+
     this.fs = new MFS();
     const builder = new PageBuilder({
       pathDict: this.pathDict,
       publishFS: this.fs,
       debug: this.options.debug,
+      mode: this.options.mode,
     });
 
     console.info('Building React pages...');
@@ -52,8 +57,8 @@ ${this.options.head}
 <body>
 ${renderToString(<div id="react-container">{React.createFactory(this.pageDict[name])(props)}</div>)}
 <script>var APP_PROPS = ${serialize(props)};</script>
-<script src="https://unpkg.com/react@${React.version}/umd/react${suffix}"></script>
-<script src="https://unpkg.com/react-dom@${reactDomVersion}/umd/react-dom${suffix}"></script>
+<script src="https://unpkg.com/react@${React.version}/umd/react${this.suffix}"></script>
+<script src="https://unpkg.com/react-dom@${reactDomVersion}/umd/react-dom${this.suffix}"></script>
 ${this.options.body}
 <script>${js}</script>
 </body>
