@@ -99,7 +99,7 @@ export class PageBuilder {
           path: __dirname + '/clients',
         },
         resolve: {
-          extensions: ['.tsx', '.jsx'],
+          extensions: ['.tsx', '.jsx', '.js', '.ts'],
         },
         externals: {
           react: 'React',
