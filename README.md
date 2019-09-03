@@ -1,6 +1,6 @@
-# react-ssr
+# react-template-engine
 
-A React template engine for Express apps with hydration.
+A React rendering engine for Express apps with hydration.
 
 ## Getting started
 
