@@ -1,6 +1,7 @@
+import {basename} from 'path';
 import globby from 'globby';
 import * as path from 'path';
-import * as React from 'react';
+import React from 'react';
 import { ComponentClass } from 'react';
 import { renderToString, version as reactDomVersion } from 'react-dom/server';
 import { PageBuilder } from './builder';
@@ -55,7 +56,7 @@ export class Renderer {
 ${this.options.head}
 </head>
 <body>
-${renderToString(<div id="react-container">{React.createFactory(this.pageDict[name])(props)}</div>)}
+${renderToString(<div id="react-container">{React.createElement(this.pageDict[name], props)}</div>)}
 <script>var APP_PROPS = ${serialize(props)};</script>
 <script src="https://unpkg.com/react@${React.version}/umd/react${this.suffix}"></script>
 <script src="https://unpkg.com/react-dom@${reactDomVersion}/umd/react-dom${this.suffix}"></script>
@@ -79,13 +80,14 @@ ${this.options.body}
     // Create map of component name -> module and page
     this.paths.map(path => {
       const module = require(path);
-      const name = module[Object.keys(module)[0]].name;
+      const name = basename(path);
       this.pageDict[name] = module[Object.keys(module)[0]];
       this.pathDict[name] = path;
     });
   }
 
   getClient(name: string): string {
-    return this.fs.readFileSync(`${__dirname}/clients/${name}.js`, 'utf8');
+    const t = this.fs.readFileSync(`${__dirname}/clients/${name}`, 'utf8');
+    return t;
   }
 }
