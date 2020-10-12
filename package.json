@@ -7,8 +7,6 @@
   "dependencies": {
     "globby": "^10.0.1",
     "memory-fs": "^0.4.1",
-    "react": "^16.8.6",
-    "react-dom": "^16.8.6",
     "serialize-javascript": "^1.7.0",
     "ts-loader": "^6.0.4",
     "webpack": "^4.36.1"
@@ -19,6 +17,10 @@
     "@types/react-dom": "^16.8.4",
     "@types/webpack": "^4.32.0",
     "typescript": "^3.5.3"
+  },
+  "peerDependencies": {
+    "react": "16.x",
+    "react-dom": "16.x"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
