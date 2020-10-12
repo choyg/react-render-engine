@@ -1,3 +1,4 @@
+import {basename} from 'path';
 import * as fs from 'fs';
 import webpack from 'webpack';
 import { rimraf } from './utils/rimraf';
@@ -17,8 +18,6 @@ export class PageBuilder {
 
   /**
    * Path to the folder containing all page components
-   *
-   * @param directory
    */
   async buildPages() {
     try {
@@ -50,29 +49,33 @@ export class PageBuilder {
     // Use file's first export. Special handling for default exports
     const module = require(path);
     const exportName = Object.keys(module)[0];
-    const className = module[exportName].name;
+    let className = module[exportName].name;
 
     // Assume default export
     let componentName = 'componentClass';
     let importStatement = `import ${componentName} from '${path}';`;
     // If not default export, use the real export name
-    if (exportName !== 'default') {
+    if (exportName !== 'default' && className) {
       componentName = exportName;
+      importStatement = `import { ${componentName} } from '${path}';`;
+    } else if (exportName !== 'default' && !className) {
+      // Function component
+      componentName = exportName;
+      className = exportName;
       importStatement = `import { ${componentName} } from '${path}';`;
     }
 
-    path = path.substring(0, path.lastIndexOf('.'));
     const js = `
     import React from 'react';
     import { hydrate } from 'react-dom';
     ${importStatement}
 
     const w = window as any;
-    const component = React.createFactory(${componentName});
+    const component = React.createElement(${componentName}, w.APP_PROPS);
     const el = document.getElementById('react-container');
-    hydrate(component(w.APP_PROPS), el);
+    hydrate(component, el);
   `;
-    const writePath = `${__dirname}/raw/${className}.tsx`;
+    const writePath = `${__dirname}/raw/${basename(path)}`;
     this.buildFS.writeFileSync(writePath, js);
     return writePath;
   }
@@ -91,6 +94,7 @@ export class PageBuilder {
         },
         mode: this.options.mode,
         output: {
+          filename: basename(path),
           path: __dirname + '/clients',
         },
         resolve: {
