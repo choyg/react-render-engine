@@ -1,14 +1,14 @@
-const { createReactRenderer } = require('react-render-engine');
+import { createReactRenderer } from 'react-render-engine';
 const express = require('express');
 
 const bootstrap = async () => {
   const app = express();
   await createReactRenderer(app, {
-    include: ['**.jsx'],
-    pages: 'pages',
+    include: ['**.js'],
+    pages: 'dist/pages',
   });
   app.get('/', (req, res) => {
-    res.render('hello.jsx');
+    res.render('hello.js');
   });
 
   app.listen(3000, () => {
@@ -16,4 +16,6 @@ const bootstrap = async () => {
   });
 };
 
-bootstrap();
+bootstrap()
+  .then(() => {})
+  .catch((err) => console.error(err));

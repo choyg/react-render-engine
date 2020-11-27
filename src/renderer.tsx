@@ -45,7 +45,6 @@ export class Renderer {
   }
 
   getHtml(name: string, props: object) {
-    //TODO require cache
     const reactPage = this.builder.getPageNode(name);
     const js = this.getClient(name);
     return `<!DOCTYPE html>
