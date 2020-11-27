@@ -68,7 +68,7 @@ export const DefaultOptions: ReactSSROptions = {
   body: '',
   head: '',
   pages: '',
-  include: ['**.js', '**.ts', '**.jsx', '**.tsx', '!node_modules'],
+  include: ['**.js', '**.ts', '**.jsx', '**.tsx'],
   debug: false,
   mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
 };

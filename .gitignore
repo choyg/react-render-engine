@@ -5,7 +5,7 @@
 *.swp
 
 # Packages
-/node_modules
+node_modules
 
 # Builds
 /dist

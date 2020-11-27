@@ -1,108 +1,84 @@
-import {basename} from 'path';
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+import Module from 'module';
+import globby from 'globby';
+import { isAbsolute, join } from 'path';
+import { basename } from 'path';
 import * as fs from 'fs';
 import webpack from 'webpack';
-import { rimraf } from './utils/rimraf';
 
 export class PageBuilder {
-  // Temporary directory components only
-  private readonly rawDir = `${__dirname}/raw`;
-  private readonly buildFS = fs;
+  private pageElements: Record<string, any> = {};
+  constructor(private readonly options: PageBuilderOptions) {}
 
-  constructor(private readonly options: PageBuilderOptions) {
-    // Clear any existing generated folders
-    rimraf(this.rawDir);
+  async bundleSource() {
+    let directory = this.options.sourceDirectory;
+    if (!isAbsolute(directory)) {
+      directory = join(process.cwd(), directory);
+    }
 
-    // Create folder for tsx clients
-    this.buildFS.mkdirSync(this.rawDir);
+    // Find all component files
+    const files = await globby(this.options.extensions, {
+      cwd: directory,
+      expandDirectories: true,
+    });
+    const paths = files.map((f) => join(directory, f));
+
+    // Bundle source input
+    const bundling = async (path: string) => {
+      await this.bundle(path, '/input-bundles');
+      await this.bundle(path, '/input-bundles-cjs', true);
+    };
+    await Promise.all(paths.map((p) => bundling(p)));
+    this.cacheSourceModules(paths);
   }
 
-  /**
-   * Path to the folder containing all page components
-   */
-  async buildPages() {
-    try {
-      // Create the individual jsx clients
-      const clients = await Promise.all(Object.entries(this.options.pathDict).map(([name, path]) => this.createClient(path)));
+  getPageNode(name: string) {
+    return this.pageElements[name];
+  }
 
-      // Webpack bundle each client into js
-      await Promise.all(
-        clients.map((path, index) => {
-          const name = path.substring(path.lastIndexOf('/') + 1, path.length - 4);
-          return this.bundleClient(path, name.toString());
-        })
+  getPageBrowser(name: string) {
+    return this.options.publishFS.readFileSync(`/input-bundles/${name}`);
+  }
+
+  private cacheSourceModules(paths: string[]) {
+    paths.forEach((p) => {
+      const name = basename(p);
+      const source = this.options.publishFS.readFileSync(
+        `/input-bundles-cjs/${name}`
       );
-
-      rimraf(this.rawDir);
-    } catch (err) {
-      rimraf(this.rawDir);
-      throw err;
-    }
+      const sourceModule = new Module(name, module.parent!) as any;
+      sourceModule.paths = (Module as any)._nodeModulePaths(__dirname);
+      sourceModule._compile(source.toString(), name);
+      const exports = Object.keys(sourceModule.exports);
+      if (exports.length === 0) {
+        throw new Error('No exports found for ' + name);
+      }
+      const moduleExport = sourceModule['default']
+        ? 'default'
+        : Object.keys(sourceModule.exports)[0];
+      this.pageElements[name] = sourceModule.exports[moduleExport];
+    });
   }
 
-  /**
-   * Creates a tsx file for the page component
-   *
-   * @param path
-   * @param name Name of the component to import
-   */
-  async createClient(path: string) {
-    // Use file's first export. Special handling for default exports
-    const module = require(path);
-    const exportName = Object.keys(module)[0];
-    let className = module[exportName].name;
-
-    // Assume default export
-    let componentName = 'componentClass';
-    let importStatement = `import ${componentName} from '${path}';`;
-    // If not default export, use the real export name
-    if (exportName !== 'default' && className) {
-      componentName = exportName;
-      importStatement = `import { ${componentName} } from '${path}';`;
-    } else if (exportName !== 'default' && !className) {
-      // Function component
-      componentName = exportName;
-      className = exportName;
-      importStatement = `import { ${componentName} } from '${path}';`;
-    }
-
-    const js = `
-    import React from 'react';
-    import { hydrate } from 'react-dom';
-    ${importStatement}
-
-    const w = window as any;
-    const component = React.createElement(${componentName}, w.APP_PROPS);
-    const el = document.getElementById('react-container');
-    hydrate(component, el);
-  `;
-    const writePath = `${__dirname}/raw/${basename(path)}`;
-    this.buildFS.writeFileSync(writePath, js);
-    return writePath;
-  }
-
-  /**
-   * Bundles a client for the specific page component from client tsx
-   *
-   * @param path Path to the client file
-   * @param name Component name
-   */
-  async bundleClient(path: string, name: string) {
+  private async bundle(path: string, outdir: string, cjs = false) {
     return new Promise((resolve, reject) => {
       const compiler = webpack({
         entry: {
-          [name]: path,
+          [basename(path)]: path,
         },
         mode: this.options.mode,
         output: {
           filename: basename(path),
-          path: __dirname + '/clients',
+          path: outdir,
+          library: 'react_render',
+          libraryTarget: cjs ? 'commonjs2' : 'var',
         },
         resolve: {
           extensions: ['.tsx', '.jsx', '.js', '.ts'],
         },
         externals: {
-          react: 'React',
-          'react-dom': 'ReactDOM',
+          react: cjs ? 'react' : 'React',
+          'react-dom': cjs ? 'react-dom' : 'ReactDOM',
         },
         module: {
           rules: [
@@ -114,14 +90,24 @@ export class PageBuilder {
                 transpileOnly: true,
               },
             },
+            {
+              test: /\.jsx?$/,
+              exclude: /(node_modules|bower_components)/,
+              use: {
+                loader: 'babel-loader',
+                options: {
+                  presets: ['@babel/preset-react'],
+                },
+              },
+            },
           ],
         },
       });
-      compiler.outputFileSystem = this.options.publishFS;
+      compiler.outputFileSystem = this.options.publishFS as any;
       compiler.run((err, stats) => {
         if (this.options.debug) console.debug({ err, stats });
         if (err) reject(err);
-        if (stats.hasErrors()) reject(stats);
+        // if (stats && stats.hasErrors()) reject(stats);
         resolve();
       });
     });
@@ -129,7 +115,9 @@ export class PageBuilder {
 }
 
 export interface PageBuilderOptions {
-  publishFS: any;
+  sourceDirectory: string;
+  extensions: string[] | string;
+  publishFS: typeof fs;
   pathDict: { [name: string]: string };
   debug: boolean;
   mode: 'development' | 'production';
