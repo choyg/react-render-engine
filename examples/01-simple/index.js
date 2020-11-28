@@ -4,7 +4,8 @@ const express = require('express');
 const bootstrap = async () => {
   const app = express();
   await createReactRenderer(app, {
-    glob: __dirname + '/pages/**/*.jsx',
+    glob: '**/*.jsx',
+    root: __dirname + '/pages',
   });
   app.get('/', (req, res) => {
     res.render('hello');
@@ -12,6 +13,14 @@ const bootstrap = async () => {
 
   app.get('/props', (req, res) => {
     res.render('props', { count: 300 });
+  });
+
+  app.get('/nested/nested', (req, res) => {
+    res.render('nested/nested');
+  });
+
+  app.get('/nested', (req, res) => {
+    res.render('nested');
   });
 
   app.listen(3000, () => {

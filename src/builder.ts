@@ -1,4 +1,4 @@
-const TerserPlugin = require('terser-webpack-plugin');
+import { join } from 'path';
 import Module from 'module';
 import globby from 'globby';
 import { basename } from 'path';
@@ -10,17 +10,23 @@ export class PageBuilder {
   constructor(private readonly options: PageBuilderOptions) {}
 
   async bundleSource() {
+    // Webpack can create the directories, but we don't want to crash
+    // if there are no globbed files
+    this.options.publishFS.mkdirSync('/input-bundles');
+    this.options.publishFS.mkdirSync('/input-bundles-cjs');
+
     // Find all component files
     const files = await globby(this.options.glob, {
+      cwd: this.options.root,
       expandDirectories: true,
     });
 
     // Bundle source input
-    const bundling = async (path: string) => {
-      await this.bundle(path, '/input-bundles');
-      await this.bundle(path, '/input-bundles-cjs', true);
+    const bundling = async (root: string, path: string) => {
+      await this.bundle(root, path, '/input-bundles');
+      await this.bundle(root, path, '/input-bundles-cjs', true);
     };
-    await Promise.all(files.map((p) => bundling(p)));
+    await Promise.all(files.map((p) => bundling(this.options.root, p)));
     this.cacheSourceModules(files);
   }
 
@@ -29,14 +35,16 @@ export class PageBuilder {
   }
 
   getPageBrowser(name: string) {
-    return this.options.publishFS.readFileSync(`/input-bundles/${name}.js`);
+    const path = join('/input-bundles', name + '.js');
+    return this.options.publishFS.readFileSync(path);
   }
 
   private cacheSourceModules(paths: string[]) {
     paths.forEach((p) => {
       const [name] = basename(p).split('.');
+      const relativePath = join(p, '..', name);
       const source = this.options.publishFS.readFileSync(
-        `/input-bundles-cjs/${name}.js`
+        join('/input-bundles-cjs', relativePath + '.js')
       );
       const sourceModule = new Module(name, module.parent!) as any;
       sourceModule.paths = (Module as any)._nodeModulePaths(__dirname);
@@ -48,19 +56,25 @@ export class PageBuilder {
       const moduleExport = sourceModule['default']
         ? 'default'
         : Object.keys(sourceModule.exports.react_render)[0];
-      this.pageElements[name] = sourceModule.exports.react_render[moduleExport];
+      this.pageElements[relativePath] =
+        sourceModule.exports.react_render[moduleExport];
     });
   }
 
-  private async bundle(path: string, outdir: string, cjs = false) {
+  private async bundle(
+    root: string,
+    path: string,
+    outdir: string,
+    cjs = false
+  ) {
     return new Promise((resolve, reject) => {
       const compiler = webpack({
         entry: {
-          [basename(path).split('.')[0]]: path,
+          [basename(path).split('.')[0]]: join(root, path),
         },
         mode: this.options.mode,
         output: {
-          path: outdir,
+          path: join(outdir, path, '..'),
           library: 'react_render',
           libraryTarget: cjs ? 'commonjs2' : 'var',
         },
@@ -125,6 +139,7 @@ export interface PageBuilderOptions {
    * Glob pattern to match files
    */
   glob: string[] | string;
+  root: string;
   publishFS: typeof fs;
   pathDict: { [name: string]: string };
   debug: boolean;

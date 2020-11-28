@@ -9,9 +9,14 @@ export interface ReactSSROptions {
   /**
    * Glob pattern of files to include as pages.
    *
-   * @default ['**.js', '**.ts', '**.jsx', '**.tsx', '!node_modules']
+   * @default ['**.js', '**.ts', '**.jsx', '**.tsx']
    */
   glob: string | string[];
+
+  /**
+   * Root directory from where to find files
+   */
+  root: string;
 
   /**
    * String inserted between head tags
@@ -61,6 +66,7 @@ export const DefaultOptions: ReactSSROptions = {
   body: '',
   head: '',
   glob: ['**.js', '**.ts', '**.jsx', '**.tsx'],
+  root: __dirname,
   debug: false,
   mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
 };

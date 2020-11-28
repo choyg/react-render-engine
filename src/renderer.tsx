@@ -36,6 +36,7 @@ export class Renderer {
       debug: this.options.debug,
       mode: this.options.mode,
       glob: this.options.glob,
+      root: this.options.root,
     });
   }
 

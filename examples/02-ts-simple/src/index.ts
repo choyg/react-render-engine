@@ -4,7 +4,8 @@ const express = require('express');
 const bootstrap = async () => {
   const app = express();
   await createReactRenderer(app, {
-    glob: __dirname + '/pages/**/*.js',
+    glob: '**/*.js',
+    root: __dirname + '/pages',
   });
   app.get('/', (req, res) => {
     res.render('hello', { typescript: 'typescript' });
