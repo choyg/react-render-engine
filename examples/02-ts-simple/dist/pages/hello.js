@@ -22,7 +22,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.HelloWorld = void 0;
 const fa_1 = require("react-icons/fa");
 const react_1 = __importStar(require("react"));
-const HelloWorld = () => {
+const HelloWorld = ({ typescript }) => {
     const [count, setCount] = react_1.useState(0);
     const onClick = () => {
         setCount(count + 1);
@@ -31,7 +31,10 @@ const HelloWorld = () => {
         react_1.default.createElement(fa_1.FaAmericanSignLanguageInterpreting, { size: 120 }),
         react_1.default.createElement("button", { onClick: onClick },
             "Clicked ",
-            count)));
+            count),
+        react_1.default.createElement("p", null,
+            "This was a tsx file and uses ",
+            typescript)));
 };
 exports.HelloWorld = HelloWorld;
 //# sourceMappingURL=hello.js.map

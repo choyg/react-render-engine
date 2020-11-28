@@ -1,7 +1,6 @@
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 import Module from 'module';
 import globby from 'globby';
-import { isAbsolute, join } from 'path';
 import { basename } from 'path';
 import * as fs from 'fs';
 import webpack from 'webpack';
@@ -11,25 +10,18 @@ export class PageBuilder {
   constructor(private readonly options: PageBuilderOptions) {}
 
   async bundleSource() {
-    let directory = this.options.sourceDirectory;
-    if (!isAbsolute(directory)) {
-      directory = join(process.cwd(), directory);
-    }
-
     // Find all component files
-    const files = await globby(this.options.extensions, {
-      cwd: directory,
+    const files = await globby(this.options.glob, {
       expandDirectories: true,
     });
-    const paths = files.map((f) => join(directory, f));
 
     // Bundle source input
     const bundling = async (path: string) => {
       await this.bundle(path, '/input-bundles');
       await this.bundle(path, '/input-bundles-cjs', true);
     };
-    await Promise.all(paths.map((p) => bundling(p)));
-    this.cacheSourceModules(paths);
+    await Promise.all(files.map((p) => bundling(p)));
+    this.cacheSourceModules(files);
   }
 
   getPageNode(name: string) {
@@ -37,14 +29,14 @@ export class PageBuilder {
   }
 
   getPageBrowser(name: string) {
-    return this.options.publishFS.readFileSync(`/input-bundles/${name}`);
+    return this.options.publishFS.readFileSync(`/input-bundles/${name}.js`);
   }
 
   private cacheSourceModules(paths: string[]) {
     paths.forEach((p) => {
-      const name = basename(p);
+      const [name] = basename(p).split('.');
       const source = this.options.publishFS.readFileSync(
-        `/input-bundles-cjs/${name}`
+        `/input-bundles-cjs/${name}.js`
       );
       const sourceModule = new Module(name, module.parent!) as any;
       sourceModule.paths = (Module as any)._nodeModulePaths(__dirname);
@@ -55,8 +47,8 @@ export class PageBuilder {
       }
       const moduleExport = sourceModule['default']
         ? 'default'
-        : Object.keys(sourceModule.exports)[0];
-      this.pageElements[name] = sourceModule.exports[moduleExport];
+        : Object.keys(sourceModule.exports.react_render)[0];
+      this.pageElements[name] = sourceModule.exports.react_render[moduleExport];
     });
   }
 
@@ -64,11 +56,10 @@ export class PageBuilder {
     return new Promise((resolve, reject) => {
       const compiler = webpack({
         entry: {
-          [basename(path)]: path,
+          [basename(path).split('.')[0]]: path,
         },
         mode: this.options.mode,
         output: {
-          filename: basename(path),
           path: outdir,
           library: 'react_render',
           libraryTarget: cjs ? 'commonjs2' : 'var',
@@ -96,18 +87,33 @@ export class PageBuilder {
               use: {
                 loader: 'babel-loader',
                 options: {
-                  presets: ['@babel/preset-react'],
+                  presets: [
+                    '@babel/preset-react',
+                    [
+                      '@babel/preset-env',
+                      {
+                        corejs: 3,
+                        useBuiltIns: 'entry',
+                        // caller.target will be the same as the target option from webpack
+                        targets: cjs ? { node: 'current' } : 'defaults',
+                      },
+                    ],
+                  ],
                 },
               },
             },
           ],
+        },
+        optimization: {
+          removeEmptyChunks: true,
+          usedExports: true,
         },
       });
       compiler.outputFileSystem = this.options.publishFS as any;
       compiler.run((err, stats) => {
         if (this.options.debug) console.debug({ err, stats });
         if (err) reject(err);
-        // if (stats && stats.hasErrors()) reject(stats);
+        if (stats && stats.hasErrors()) reject(stats);
         resolve();
       });
     });
@@ -115,8 +121,10 @@ export class PageBuilder {
 }
 
 export interface PageBuilderOptions {
-  sourceDirectory: string;
-  extensions: string[] | string;
+  /**
+   * Glob pattern to match files
+   */
+  glob: string[] | string;
   publishFS: typeof fs;
   pathDict: { [name: string]: string };
   debug: boolean;

@@ -5,11 +5,10 @@ const express = require('express');
 const bootstrap = async () => {
     const app = express();
     await react_render_engine_1.createReactRenderer(app, {
-        include: ['**.js'],
-        pages: 'dist/pages',
+        glob: __dirname + '/pages/**/*.js',
     });
     app.get('/', (req, res) => {
-        res.render('hello.js');
+        res.render('hello', { typescript: 'typescript' });
     });
     app.listen(3000, () => {
         console.log('Listening on port 3000');

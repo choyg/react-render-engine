@@ -20,14 +20,17 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HelloWorld = void 0;
+const fa_1 = require("react-icons/fa");
 const react_1 = __importStar(require("react"));
-const HelloWorld = () => {
+const HelloWorld = ({ typescript }) => {
     const [count, setCount] = react_1.useState(0);
     const onClick = () => {
         setCount(count + 1);
     };
     return (<>
+      <fa_1.FaAmericanSignLanguageInterpreting size={120}/>
       <button onClick={onClick}>Clicked {count}</button>
+      <p>This was a tsx file and uses {typescript}</p>
     </>);
 };
 exports.HelloWorld = HelloWorld;

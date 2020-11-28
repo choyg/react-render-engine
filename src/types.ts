@@ -7,18 +7,11 @@ export interface RenderProps {
 
 export interface ReactSSROptions {
   /**
-   * Directory containing the page components.
-   *
-   * @default ''
-   */
-  pages: string;
-
-  /**
    * Glob pattern of files to include as pages.
    *
    * @default ['**.js', '**.ts', '**.jsx', '**.tsx', '!node_modules']
    */
-  include: string | string[];
+  glob: string | string[];
 
   /**
    * String inserted between head tags
@@ -67,8 +60,7 @@ export interface RenderOptions extends ReactSSROptions {
 export const DefaultOptions: ReactSSROptions = {
   body: '',
   head: '',
-  pages: '',
-  include: ['**.js', '**.ts', '**.jsx', '**.tsx'],
+  glob: ['**.js', '**.ts', '**.jsx', '**.tsx'],
   debug: false,
   mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
 };
