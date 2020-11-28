@@ -17,6 +17,6 @@
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-icons": "^4.1.0",
-    "react-render-engine": "^0.0.8"
+    "react-render-engine": "^0.0.9"
   }
 }
