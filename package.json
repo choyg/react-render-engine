@@ -1,6 +1,6 @@
 {
   "name": "react-render-engine",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -33,5 +33,9 @@
     "build": "tsc"
   },
   "author": "Gensen Choy",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/choyg/react-render-engine.git"
+  }
 }

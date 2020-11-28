@@ -6,7 +6,7 @@ A React rendering engine for Express apps with hydration.
 
 ### Installation
 
---
+`npm install react-render-engine`
 
 ## Developing
 
